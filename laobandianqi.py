@@ -16,8 +16,6 @@ import sys
 import time
 from typing import Optional, Dict, Any
 
-os.environ['laobandianqi'] = 'eyJhbGciOiJIUzI1NiJ9.eyJvcGVuSWQiOiJvZXhqbTVIaXlUckxOelhvbk9tdHlQWUFPYjFnIiwibmFtZSI6IuiDveW5sueZvuWIqeeUnOmFkiIsImlkIjoyMjMzOTUwNzEyOTk5OTc2OTYsInNvdXJjZSI6Ik1pbmlBcHAiLCJhaVRva2VuIjoiRTYxckM4Y3p5bTJTMVZHWllBN1ZaWU9NNVNmbnpOdTAiLCJpYXQiOjE3NTczMTAxNzYsImV4cCI6MTc1OTkwMjE3Nn0.ekwl47wouz4TqAsgcs-u73bBpIrTq-gQzlufGeU1-iU'
-
 try:
     import httpx
 except ImportError:
