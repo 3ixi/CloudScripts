@@ -53,8 +53,8 @@ import requests
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 
-PRIMARY_BASE_URL = "https://3ixi.top"
-BACKUP_BASE_URL = "https://cloud.3ixi.top"
+PRIMARY_BASE_URL = "https://cloud.3ixi.top"
+BACKUP_BASE_URL = "https://3ixi.top"
 
 class CloudAuth:
     def __init__(self):
@@ -94,12 +94,12 @@ class CloudAuth:
     def _load_auth_code(self):
         self.auth_code = os.getenv('CloudAuth')
         if not self.auth_code:
-            raise ValueError("未找到环境变量 'CloudAuth'，请设置您的授权码")
+            raise ValueError("未找到环境变量'CloudAuth'，请访问https://3ixi.top获取授权码")
         
         try:
             uuid.UUID(self.auth_code)
         except ValueError:
-            raise ValueError("授权码格式无效")
+            raise ValueError("授权码格式无效，请访问https://3ixi.top重新获取")
     
     def _get_timestamp(self):
         timestamp_ms = int(time.time() * 1000)
@@ -262,4 +262,5 @@ def call_service(service_name, **kwargs):
 
 if __name__ == "__main__":
     print("3iXi认证模块")
-    print("=" * 50)
+    print("=" * 30)
+    print("访问https://3ixi.top获取授权码")
