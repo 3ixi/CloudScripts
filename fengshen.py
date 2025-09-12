@@ -38,9 +38,13 @@ except ImportError:
 class FengShen:
     def __init__(self):
         self.base_url = "https://fsapp.dfmc.com.cn/appv3/api"
+        self.nami_base_url = "https://nami-app.dfmc.com.cn/appv3/api"
+        self.yipai_base_url = "https://sapp.dfmc.com.cn/appv3/api"
         self.mod = "fsapp"
         
         self.user_credentials = self._load_user_credentials()
+        self.nami_credentials = self._load_nami_credentials()
+        self.yipai_credentials = self._load_yipai_credentials()
         
         try:
             self.auth_client = cloud_auth.get_auth_client()
@@ -65,6 +69,36 @@ class FengShen:
         if not credentials:
             print("❌ 环境变量'fengshen'中没有有效的账号Token")
             sys.exit(1)
+        
+        return credentials
+    
+    def _load_nami_credentials(self) -> list:
+        credential_env = os.getenv('dongfengnami')
+        if not credential_env:
+            print("⚠️ 未找到环境变量'dongfengnami'，跳过东风纳米签到")
+            return []
+        
+        credentials = []
+        for cred in credential_env.split('#'):
+            cred = cred.strip()
+            if cred and '&' in cred:
+                uid, token = cred.split('&', 1)
+                credentials.append({'uid': uid.strip(), 'token': token.strip()})
+        
+        return credentials
+    
+    def _load_yipai_credentials(self) -> list:
+        credential_env = os.getenv('dongfengyipai')
+        if not credential_env:
+            print("⚠️ 未找到环境变量'dongfengyipai'，跳过东风奕派签到")
+            return []
+        
+        credentials = []
+        for cred in credential_env.split('#'):
+            cred = cred.strip()
+            if cred and '&' in cred:
+                uid, token = cred.split('&', 1)
+                credentials.append({'uid': uid.strip(), 'token': token.strip()})
         
         return credentials
     
@@ -112,11 +146,21 @@ class FengShen:
             print(f"❌ 获取签名信息失败: {e}")
             raise
     
-    def _build_headers(self, uid: str, api: str, keysign: str, sign: str, timestamp: int, noncestr: str, payload: str = "") -> Dict[str, str]:
+    def _build_headers(self, uid: str, api: str, keysign: str, sign: str, timestamp: int, noncestr: str, payload: str = "", platform: str = "fengshen") -> Dict[str, str]:
         content_length = len(payload.encode('utf-8')) if payload else 0
         
+        if platform == "fengshen":
+            host = "fsapp.dfmc.com.cn"
+            brand = "fs"
+        elif platform == "nami":
+            host = "nami-app.dfmc.com.cn"
+            brand = "nami"
+        else:
+            host = "sapp.dfmc.com.cn"
+            brand = None
+        
         headers = {
-            "Host": "fsapp.dfmc.com.cn",
+            "Host": host,
             "Connection": "keep-alive",
             "Content-Length": str(content_length),
             "content-type": "application/json",
@@ -126,7 +170,6 @@ class FengShen:
             "uid": uid,
             "apitype": "8",
             "noncestr": noncestr,
-            "brand": "fs",
             "timestamp": str(timestamp),
             "lang": "cn",
             "api": api,
@@ -135,6 +178,9 @@ class FengShen:
             "User-Agent": "Mozilla/5.0 (iPhone; CPU iPhone OS 18_3 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Mobile/15E148 MicroMessenger/8.0.62(0x18003e3a) NetType/WIFI Language/zh_CN",
             "Referer": "https://servicewechat.com/wxae0a9289f3272125/426/page-frame.html"
         }
+        
+        if brand is not None:
+            headers["brand"] = brand
         
         return headers
     
@@ -146,7 +192,7 @@ class FengShen:
             return False
         return True
     
-    def _make_request(self, uid: str, token: str, api: str, payload: str = "{}") -> Optional[Dict[str, Any]]:
+    def _make_request(self, uid: str, token: str, api: str, payload: str = "{}", platform: str = "fengshen") -> Optional[Dict[str, Any]]:
         timestamp = self._get_timestamp()
         noncestr = self._generate_noncestr()
         
@@ -157,12 +203,19 @@ class FengShen:
         
         headers = self._build_headers(
             uid, api, auth_info['keysign'], auth_info['sign'], 
-            timestamp, noncestr, payload
+            timestamp, noncestr, payload, platform
         )
+        
+        if platform == "fengshen":
+            url = self.base_url
+        elif platform == "nami":
+            url = self.nami_base_url
+        else:
+            url = self.yipai_base_url
         
         try:
             response = requests.post(
-                self.base_url,
+                url,
                 headers=headers,
                 data=payload,
                 timeout=30
@@ -202,6 +255,25 @@ class FengShen:
             return True
         return False
     
+    def nami_signin(self, uid: str, token: str) -> bool:
+        api = "ly.mp.miniprogram.activity.namiSignin"
+        response_data = self._make_request(uid, token, api, platform="nami")
+        
+        if response_data and self._check_response(response_data):
+            msg = response_data.get('msg', '签到成功')
+            print(f"✅ 【东风纳米】{msg}")
+            return True
+        return False
+    
+    def yipai_signin(self, uid: str, token: str) -> bool:
+        api = "ly.mp.miniprogram.activity.signin"
+        response_data = self._make_request(uid, token, api, platform="yipai")
+        
+        if response_data and response_data.get('result') == '1':
+            print(f"✅ 【东风奕派】签到成功")
+            return True
+        return False
+    
     def get_points(self, uid: str, token: str) -> Optional[Dict[str, Any]]:
         api = "ly.mp.miniprogram.growth.points.user.query"
         response_data = self._make_request(uid, token, api)
@@ -231,6 +303,7 @@ class FengShen:
         else:
             print(f"【{member_name}】Token有效")
         
+        # 风神Club签到
         signin_info = self.check_signin_status(uid, token)
         if not signin_info:
             return
@@ -242,14 +315,36 @@ class FengShen:
             print("今日未签到")
             self.signin(uid, token)
         
+        # 东风纳米签到
+        nami_cred = self._find_matching_credential(uid, self.nami_credentials)
+        if nami_cred:
+            self.nami_signin(nami_cred['uid'], nami_cred['token'])
+        
+        # 东风奕派签到
+        yipai_cred = self._find_matching_credential(uid, self.yipai_credentials)
+        if yipai_cred:
+            self.yipai_signin(yipai_cred['uid'], yipai_cred['token'])
+        
+        # 获取最终积分（3个平台数据同步）
         points_info = self.get_points(uid, token)
         if points_info:
             can_use_points = points_info.get('canUsePoints', '0')
             print(f"📊 当前可用积分{can_use_points}")
     
+    def _find_matching_credential(self, uid: str, credentials: list) -> Optional[Dict[str, str]]:
+        """根据UID查找匹配的凭据"""
+        for cred in credentials:
+            if cred['uid'] == uid:
+                return cred
+        return None
+    
     def run(self):
         print("🟢 风神签到脚本启动")
-        print(f"📋️ 共找到 {len(self.user_credentials)} 个账号")
+        print(f"📋️ 共找到 {len(self.user_credentials)} 个风神账号")
+        if self.nami_credentials:
+            print(f"📋️ 共找到 {len(self.nami_credentials)} 个东风纳米账号")
+        if self.yipai_credentials:
+            print(f"📋️ 共找到 {len(self.yipai_credentials)} 个东风奕派账号")
         
         for i, credential in enumerate(self.user_credentials):
             self.process_user(credential, i)
