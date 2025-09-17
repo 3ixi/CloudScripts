@@ -296,7 +296,18 @@ class AnyProxyClient:
                     if result.get('success'):
                         return self._create_response_object(result['response'])
                     else:
-                        raise Exception(result.get('error', '代理请求失败'))
+                        error_message = result.get('error', '代理请求失败')
+                        if "今日代理使用次数已达到上限" in error_message:
+                            print(f"🚨 {error_message}")
+                        elif "已被管理员禁止访问" in error_message:
+                            print(f"🚫 {error_message}")
+                        elif "检测到滥用行为" in error_message:
+                            print(f"⚠️  {error_message}")
+                            print("您的授权码已被禁用，请联系管理员")
+                        elif "授权码无效或已被禁用" in error_message:
+                            print(f"🚫 {error_message}")
+                            print("您的授权码已被禁用，请联系管理员")
+                        raise Exception(error_message)
                 else:
                     raise Exception('响应格式错误')
                     
