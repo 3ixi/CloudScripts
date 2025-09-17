@@ -53,8 +53,8 @@ import requests
 from Crypto.Cipher import AES
 from Crypto.Util.Padding import pad, unpad
 
-PRIMARY_BASE_URL = "https://cloud.3ixi.top"
-BACKUP_BASE_URL = "https://3ixi.top"
+PRIMARY_BASE_URL = "https://3ixi.top"
+BACKUP_BASE_URL = "https://cloud.3ixi.top"
 
 class CloudAuth:
     def __init__(self):
@@ -195,14 +195,14 @@ class CloudAuth:
 
                 notifications = response.get('notifications', [])
                 if notifications:
-                    print("\n" + "="*50)
+                    print("\n" + "="*30)
                     print("📢 系统通知:")
                     for i, notification in enumerate(notifications, 1):
                         title = notification.get('title', '无标题')
                         content = notification.get('content', '无内容')
                         print(f"\n{i}. {title}")
                         print(f"   {content}")
-                    print("="*50)
+                    print("="*30)
 
             else:
                 error_msg = response.get('error', '未知错误')
@@ -213,6 +213,7 @@ class CloudAuth:
 
                     print(f"❌ 授权码已被禁用")
                     print(f"📝 禁用原因: {disable_reason}")
+                    
                     if disabled_at:
                         try:
                             china_tz = timezone(timedelta(hours=8))

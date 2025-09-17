@@ -2,13 +2,13 @@
 # -*- coding: utf-8 -*-
 """
 风神Club签到脚本
-小程序名：风神Club
+小程序名：风神Club、东风纳米、东风奕派
 创建日期：2025-09-11
 环境变量：
 　　变量名：fengshen
 　　变量值：userId&token
 　　多个账号间用#分隔：userId1&token1#userId2&token2
-Token获取：打开小程序登录，抓包域名https://fsapp.dfmc.com.cn/appv3/api 中返回数据以accessToken开头的那条数据，获取userId和token值（注意这里是token，不是accessToken）
+Token获取：打开小程序登录，抓包域名https://fsapp.dfmc.com.cn/appv3/api 中返回数据以accessToken开头的那条数据，获取userId和token值（注意这里是token，不是accessToken），另外两个东风系小程序同理。
 ！！此脚本会获取账号Token到云端生成加密签名，但不会在云端保存，介意请勿使用！！
 """
 
@@ -24,7 +24,6 @@ try:
     import requests
 except ImportError:
     print("❌ 请先安装依赖：requests")
-    print("安装命令：pip install requests")
     sys.exit(1)
 
 try:
@@ -33,6 +32,19 @@ except ImportError:
     print("❌ 找不到云函数模块，请确保cloud_auth.py文件在同一目录下")
     print("访问https://github.com/3ixi/CloudScripts获取")
     sys.exit(1)
+
+try:
+    from SendNotify import SendNotify, start_capture, stop_capture_and_notify
+    NOTIFICATION_ENABLED = True
+except ImportError:
+    print("⚠️ 未找到SendNotify模块，可前往 https://github.com/3ixi/CloudScripts 获取")
+    NOTIFICATION_ENABLED = False
+    def SendNotify(title="", content=""):
+        pass
+    def start_capture():
+        pass
+    def stop_capture_and_notify(title=""):
+        pass
 
 
 class FengShen:
@@ -49,14 +61,15 @@ class FengShen:
         try:
             self.auth_client = cloud_auth.get_auth_client()
         except Exception as e:
-            print(f"❌ 初始化认证客户端失败: {e}")
+            error_msg = f"❌ 初始化认证客户端失败: {e}"
+            print(error_msg)
             sys.exit(1)
     
     def _load_user_credentials(self) -> list:
         credential_env = os.getenv('fengshen')
         if not credential_env:
-            print("❌ 未找到环境变量'fengshen'，请设置您的账号Token")
-            print("格式：userId&token，多个账号用#分隔")
+            error_msg = "❌ 未找到环境变量'fengshen'，请设置您的账号Token\n格式：userId&token，多个账号用#分隔"
+            print(error_msg)
             sys.exit(1)
         
         credentials = []
@@ -67,7 +80,8 @@ class FengShen:
                 credentials.append({'uid': uid.strip(), 'token': token.strip()})
         
         if not credentials:
-            print("❌ 环境变量'fengshen'中没有有效的账号Token")
+            error_msg = "❌ 环境变量'fengshen'中没有有效的账号Token"
+            print(error_msg)
             sys.exit(1)
         
         return credentials
@@ -339,6 +353,9 @@ class FengShen:
         return None
     
     def run(self):
+        if NOTIFICATION_ENABLED:
+            start_capture()
+            
         print("🟢 风神签到脚本启动")
         print(f"📋️ 共找到 {len(self.user_credentials)} 个风神账号")
         if self.nami_credentials:
@@ -352,6 +369,9 @@ class FengShen:
         print(f"\n{'='*50}")
         print("✅ 所有账号处理完成")
         print(f"{'='*50}")
+        
+        if NOTIFICATION_ENABLED:
+            stop_capture_and_notify("东风系小程序签到结果")
 
 
 def main():
@@ -360,8 +380,12 @@ def main():
         client.run()
     except KeyboardInterrupt:
         print("\n❌ 脚本被用户中断")
+        if NOTIFICATION_ENABLED:
+            stop_capture_and_notify("风神脚本中断")
     except Exception as e:
         print(f"❌ 脚本运行出错: {e}")
+        if NOTIFICATION_ENABLED:
+            stop_capture_and_notify("风神脚本运行错误")
 
 
 if __name__ == "__main__":

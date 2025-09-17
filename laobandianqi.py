@@ -29,6 +29,19 @@ except ImportError:
     print("访问https://github.com/3ixi/CloudScripts获取")
     sys.exit(1)
 
+try:
+    from SendNotify import SendNotify, start_capture, stop_capture_and_notify
+    NOTIFICATION_ENABLED = True
+except ImportError:
+    print("⚠️ 未找到SendNotify模块，可前往 https://github.com/3ixi/CloudScripts 获取")
+    NOTIFICATION_ENABLED = False
+    def SendNotify(title="", content=""):
+        pass
+    def start_capture():
+        pass
+    def stop_capture_and_notify(title=""):
+        pass
+
 
 class LaoBanDianQi:
     def __init__(self):
@@ -87,7 +100,6 @@ class LaoBanDianQi:
             raise
     
     def _build_headers(self, user_token: str, timestamp: int, secret: str, signature: str, method: str) -> Dict[str, str]:
-        """构建请求头，根据请求方法决定是否添加content-length"""
         headers = {
             "host": "aio.myroki.com",
             "x-app-env": "release",
@@ -155,9 +167,9 @@ class LaoBanDianQi:
             return None
     
     async def process_user(self, user_token: str, user_index: int):
-        print(f"\n{'='*50}")
+        print(f"\n{'='*30}")
         print(f"处理第 {user_index + 1} 个账号")
-        print(f"{'='*50}")
+        print(f"{'='*30}")
         
         timestamp = self._get_timestamp()
         try:
@@ -215,15 +227,21 @@ class LaoBanDianQi:
                 print(f"📊 当前积分{points}")
     
     async def run(self):
+        if NOTIFICATION_ENABLED:
+            start_capture()
+            
         print("🟢 老板电器签到脚本启动")
         print(f"📋️ 共找到 {len(self.user_tokens)} 个账号")
         
         for i, token in enumerate(self.user_tokens):
             await self.process_user(token, i)
         
-        print(f"\n{'='*50}")
+        print(f"\n{'='*30}")
         print("✅ 所有账号处理完成")
-        print(f"{'='*50}")
+        print(f"{'='*30}")
+        
+        if NOTIFICATION_ENABLED:
+            stop_capture_and_notify("老板电器签到结果")
 
 
 async def main():
@@ -233,8 +251,12 @@ async def main():
         await client.run()
     except KeyboardInterrupt:
         print("\n❌ 脚本被用户中断")
+        if NOTIFICATION_ENABLED:
+            stop_capture_and_notify("老板电器脚本中断")
     except Exception as e:
         print(f"❌ 脚本运行出错: {e}")
+        if NOTIFICATION_ENABLED:
+            stop_capture_and_notify("老板电器脚本运行错误")
 
 
 if __name__ == "__main__":
