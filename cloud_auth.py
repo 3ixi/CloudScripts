@@ -4,6 +4,7 @@
 3iXi云函数认证模块
 用于与3iXi认证服务器进行安全通信，云端加密敏感信息
 创建日期：2025-09-08
+模块作者：3iXi
 项目主页：https://github.com/3ixi/CloudScripts
 获取授权码：https://3ixi.top
 

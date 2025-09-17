@@ -320,24 +320,39 @@ class FengShen:
         # 风神Club签到
         signin_info = self.check_signin_status(uid, token)
         if not signin_info:
-            return
-        
-        is_sign = signin_info.get('isSign', 0)
-        if is_sign == 1:
-            print("今日已签到")
+            print("风神Club签到状态检查失败")
         else:
-            print("今日未签到")
-            self.signin(uid, token)
+            is_sign = signin_info.get('isSign', 0)
+            if is_sign == 1:
+                print("风神Club今日已签到")
+            else:
+                print("风神Club今日未签到")
+                if self.signin(uid, token):
+                    print("风神Club签到成功")
+                else:
+                    print("风神Club签到失败")
         
-        # 东风纳米签到
+        # 东风纳米签到 - 无论风神Club是否签到都要执行
+        print("开始东风纳米签到...")
         nami_cred = self._find_matching_credential(uid, self.nami_credentials)
         if nami_cred:
-            self.nami_signin(nami_cred['uid'], nami_cred['token'])
+            if self.nami_signin(nami_cred['uid'], nami_cred['token']):
+                print("东风纳米签到完成")
+            else:
+                print("东风纳米签到失败")
+        else:
+            print("未找到匹配的东风纳米账号，跳过签到")
         
-        # 东风奕派签到
+        # 东风奕派签到 - 无论风神Club是否签到都要执行
+        print("开始东风奕派签到...")
         yipai_cred = self._find_matching_credential(uid, self.yipai_credentials)
         if yipai_cred:
-            self.yipai_signin(yipai_cred['uid'], yipai_cred['token'])
+            if self.yipai_signin(yipai_cred['uid'], yipai_cred['token']):
+                print("东风奕派签到完成")
+            else:
+                print("东风奕派签到失败")
+        else:
+            print("未找到匹配的东风奕派账号，跳过签到")
         
         # 获取最终积分（3个平台数据同步）
         points_info = self.get_points(uid, token)
