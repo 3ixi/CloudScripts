@@ -296,13 +296,104 @@ class FengShen:
             return response_data.get('rows', {})
         return None
     
-    def process_user(self, credential: Dict[str, str], user_index: int):
+    def _find_matching_credential(self, uid: str, credentials: list) -> Optional[Dict[str, str]]:
+        """根据UID查找匹配的凭据"""
+        for cred in credentials:
+            if cred['uid'] == uid:
+                return cred
+        return None
+    
+    def run(self):
+        if NOTIFICATION_ENABLED:
+            start_capture()
+            
+        print("🟢 风神签到脚本启动")
+        print(f"📋️ 共找到 {len(self.yipai_credentials)} 个东风奕派账号")
+        print(f"📋️ 共找到 {len(self.nami_credentials)} 个东风纳米账号")
+        print(f"📋️ 共找到 {len(self.user_credentials)} 个风神账号")
+        
+        # 先处理所有东风奕派账号
+        print(f"\n{'='*50}")
+        print("开始处理东风奕派账号")
+        print(f"{'='*50}")
+        for i, credential in enumerate(self.yipai_credentials):
+            self.process_yipai_account(credential, i)
+        
+        # 再处理所有东风纳米账号
+        print(f"\n{'='*50}")
+        print("开始处理东风纳米账号")
+        print(f"{'='*50}")
+        for i, credential in enumerate(self.nami_credentials):
+            self.process_nami_account(credential, i)
+        
+        # 最后处理所有风神Club账号
+        print(f"\n{'='*50}")
+        print("开始处理风神Club账号")
+        print(f"{'='*50}")
+        for i, credential in enumerate(self.user_credentials):
+            self.process_fengshen_account(credential, i)
+        
+        print(f"\n{'='*50}")
+        print("✅ 所有账号处理完成")
+        print(f"{'='*50}")
+        
+        if NOTIFICATION_ENABLED:
+            stop_capture_and_notify("东风系小程序签到结果")
+    
+    def process_yipai_account(self, credential: Dict[str, str], user_index: int):
+        """专门处理东风奕派账号"""
         uid = credential['uid']
         token = credential['token']
         
-        print(f"\n{'='*50}")
-        print(f"处理第 {user_index + 1} 个账号 (UID: {uid})")
-        print(f"{'='*50}")
+        print(f"\n{'='*30}")
+        print(f"处理第 {user_index + 1} 个东风奕派账号 (UID: {uid})")
+        print(f"{'='*30}")
+        
+        # 直接进行签到，不检查状态
+        print("开始东风奕派签到...")
+        if self.yipai_signin(uid, token):
+            print("东风奕派签到完成")
+        else:
+            print("东风奕派签到失败")
+    
+    def process_nami_account(self, credential: Dict[str, str], user_index: int):
+        """专门处理东风纳米账号"""
+        uid = credential['uid']
+        token = credential['token']
+        
+        print(f"\n{'='*30}")
+        print(f"处理第 {user_index + 1} 个东风纳米账号 (UID: {uid})")
+        print(f"{'='*30}")
+        
+        # 检查token有效性
+        user_info = self.check_token_validity(uid, token)
+        if not user_info:
+            print(f"账号userId【{uid}】Token失效，请更新")
+            return
+        
+        member_name = user_info.get('memberName', '未知用户')
+        soon_expire_points = int(user_info.get('soonExpirePointsSum', '0'))
+        
+        if soon_expire_points > 0:
+            print(f"【{member_name}】Token有效，有{soon_expire_points}积分即将过期")
+        else:
+            print(f"【{member_name}】Token有效")
+        
+        # 直接进行签到，不检查状态
+        print("开始东风纳米签到...")
+        if self.nami_signin(uid, token):
+            print("东风纳米签到完成")
+        else:
+            print("东风纳米签到失败")
+    
+    def process_fengshen_account(self, credential: Dict[str, str], user_index: int):
+        """专门处理风神Club账号"""
+        uid = credential['uid']
+        token = credential['token']
+        
+        print(f"\n{'='*30}")
+        print(f"处理第 {user_index + 1} 个风神账号 (UID: {uid})")
+        print(f"{'='*30}")
         
         user_info = self.check_token_validity(uid, token)
         if not user_info:
@@ -332,61 +423,11 @@ class FengShen:
                 else:
                     print("风神Club签到失败")
         
-        # 东风纳米签到 - 无论风神Club是否签到都要执行
-        print("开始东风纳米签到...")
-        nami_cred = self._find_matching_credential(uid, self.nami_credentials)
-        if nami_cred:
-            if self.nami_signin(nami_cred['uid'], nami_cred['token']):
-                print("东风纳米签到完成")
-            else:
-                print("东风纳米签到失败")
-        else:
-            print("未找到匹配的东风纳米账号，跳过签到")
-        
-        # 东风奕派签到 - 无论风神Club是否签到都要执行
-        print("开始东风奕派签到...")
-        yipai_cred = self._find_matching_credential(uid, self.yipai_credentials)
-        if yipai_cred:
-            if self.yipai_signin(yipai_cred['uid'], yipai_cred['token']):
-                print("东风奕派签到完成")
-            else:
-                print("东风奕派签到失败")
-        else:
-            print("未找到匹配的东风奕派账号，跳过签到")
-        
-        # 获取最终积分（3个平台数据同步）
+        # 获取最终积分
         points_info = self.get_points(uid, token)
         if points_info:
             can_use_points = points_info.get('canUsePoints', '0')
             print(f"📊 当前可用积分{can_use_points}")
-    
-    def _find_matching_credential(self, uid: str, credentials: list) -> Optional[Dict[str, str]]:
-        """根据UID查找匹配的凭据"""
-        for cred in credentials:
-            if cred['uid'] == uid:
-                return cred
-        return None
-    
-    def run(self):
-        if NOTIFICATION_ENABLED:
-            start_capture()
-            
-        print("🟢 风神签到脚本启动")
-        print(f"📋️ 共找到 {len(self.user_credentials)} 个风神账号")
-        if self.nami_credentials:
-            print(f"📋️ 共找到 {len(self.nami_credentials)} 个东风纳米账号")
-        if self.yipai_credentials:
-            print(f"📋️ 共找到 {len(self.yipai_credentials)} 个东风奕派账号")
-        
-        for i, credential in enumerate(self.user_credentials):
-            self.process_user(credential, i)
-        
-        print(f"\n{'='*50}")
-        print("✅ 所有账号处理完成")
-        print(f"{'='*50}")
-        
-        if NOTIFICATION_ENABLED:
-            stop_capture_and_notify("东风系小程序签到结果")
 
 
 def main():
