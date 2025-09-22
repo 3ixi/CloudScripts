@@ -10,7 +10,7 @@
 　　多个账号间用#分隔：x-user-token1#x-user-token2
 Token获取：打开小程序登录，抓包域名https://aio.myroki.com 请求头中的x-user-token的值
 """
-import AnyProxy
+
 import os
 import sys
 import time
