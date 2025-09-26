@@ -46,7 +46,7 @@ requests pycryptodome
 2. 访问青龙面板，打开"`配置文件`"页面，从44行开始，找到自己想要使用的推送方式，在双引号`""`中填入对应的配置
 3. 脚本运行结束后会自动发送通知
 
-~~### API代理模块 (AnyProxy.py)~~**【由于灰产滥用，已移除】**  
+### ~~API代理模块 (AnyProxy.py)~~**【由于灰产滥用，已移除】**  
 ~~`AnyProxy.py`是一个透明的API代理转发模块，可以拦截所有HTTP请求并通过云端代理服务器转发（每一个请求都会使用不同的IP，有效解决本机IP被风控的问题）。~~  
   
 ~~**功能特性：**~~  
@@ -64,10 +64,13 @@ requests pycryptodome
 
 ## 自动化脚本列表
 
+部分脚本可通过搭建iPad协议服务后定期运行[envRefresh 自动更新Token脚本](https://github.com/3ixi/CodeScripts/blob/main/README.md#envrefresh-%E8%87%AA%E5%8A%A8%E6%9B%B4%E6%96%B0token%E8%84%9A%E6%9C%AC)实现自动更新Token。
+
 | 脚本名 | 可用状态 | 小程序名 | 可获奖励 | 备注 |
 |--------|----------|----------|----------|------|
-| [老板电器](./laobandianqi.py) | ✅ | 老板电器 | 积分 | Token有效期一个月 |
+| [老板电器签到](./laobandianqi.py) | ✅ | 老板电器 | 积分 | Token有效期一个月 |
 | [东风系签到](./fengshen.py) | ✅ | 风神Club、东风纳米、东风奕派 | 积分 | Token有效期一天，即将移除脚本 |
+| [石小羊家园自动任务](./shixiaoyang.py) | ✅ | 石小羊家园 | 积分 | Token有效期未知 |
 
   
 > - ✅ 表示完全可用  
