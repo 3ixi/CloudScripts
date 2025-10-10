@@ -69,9 +69,9 @@ requests pycryptodome
 | 脚本名 | 可用状态 | 小程序名 | 可获奖励 | 备注 |
 |--------|----------|----------|----------|------|
 | [老板电器签到](./laobandianqi.py) | ✅ | 老板电器 | 积分 | Token有效期一个月 |
-| [东风系签到](./fengshen.py) | ✅ | 风神Club、东风纳米、东风奕派 | 积分 | Token有效期一天，即将移除脚本 |
 | [石小羊家园自动任务](./shixiaoyang.py) | ✅ | 石小羊家园 | 积分 | Token有效期未知 |
-
+| [ONE 白嫖点播](./freeBuy.py) | ✅ | [APP下载](https://2f2279ygf3x29x.icu?code=jqJ9txPeVS) | 点播 | Token自动刷新,永不过期 |
+| [ONE 白嫖历史点播](./freePlug.py) | ✅ | [APP下载](https://2f2279ygf3x29x.icu?code=jqJ9txPeVS) | 点播 | Token自动刷新,永不过期 |
   
 > - ✅ 表示完全可用  
 > - ⚠️ 表示部分功能可用  
