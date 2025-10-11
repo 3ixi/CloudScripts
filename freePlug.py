@@ -180,12 +180,9 @@ def main():
     # 统计购买成功的数量
     total_purchase_count = 0
     
-        try:
-            auth_client = cloud_auth.get_auth_client()
-        except Exception as e:
-            print(f"❌ 创建云函数认证客户端失败: {e}")
-            return
-    
+    try:
+        auth_client = cloud_auth.get_auth_client()
+        
         # 为每个账号执行白嫖操作
         for account_idx, account in enumerate(config['accounts']):
             account_name = account.get('nickname', f'账号{account_idx+1}')
@@ -201,20 +198,20 @@ def main():
             else:
                 print(f"❌ {account_name} Token刷新失败: {message}")
                 continue
-        
+            
             # 重置当前年月
             scan_year, scan_month = current_year, current_month
-        
+            
             while (scan_year > end_year) or (scan_year == end_year and scan_month >= end_month):
                 published_at = f"20;{scan_year - 2020}-{scan_month}"
-                    
+                
                 print(f"{account_name}: 开始扫描 {scan_year}年{scan_month}月 的数据...")
-            
+                
                 # 每月请求60页
                 page = 1
                 has_data = True  # 标记当前月份是否有数据
                 month_purchase_count = 0  # 本月购买成功的数量
-                    
+                
                 while page <= 60 and has_data:
                     # 获取文章列表
                     success, data = get_article_list_cloud(auth_client, account, config, published_at, page)
@@ -230,15 +227,15 @@ def main():
                     
                     # 查找buy和coin同时为0的数据
                     buyable_items = [item for item in data['data'] if item['buy'] == 0 and item['coin'] == '0']
-                        
+                    
                     if buyable_items:
                         for item in buyable_items:
                             buy_id = item['id']
                             buy_title = item['title']
-                                
+                            
                             # 执行购买
                             success, buy_data = purchase_item_cloud(auth_client, account, config, buy_id)
-                                
+                            
                             if success:
                                 result = buy_data.get('mezsage', '未知')
                                 print(f"✅ {account_name}: 购买成功 - {buy_title} ({result})")
@@ -262,7 +259,7 @@ def main():
                 if success:
                     config['accounts'][account_idx] = account
                     write_config(config)
-            
+                
                 # 更新当前月份为前一个月
                 scan_year, scan_month = get_previous_month(scan_year, scan_month)
                 
@@ -270,7 +267,7 @@ def main():
                 if (scan_year < end_year) or (scan_year == end_year and scan_month < end_month):
                     print(f"{account_name}: 已达到结束月份 {end_year}年{end_month}月，结束扫描。")
                     break
-    
+        
         print("\n====== ONE插件白嫖脚本执行完成 ======")
         
         if total_purchase_count > 0:
